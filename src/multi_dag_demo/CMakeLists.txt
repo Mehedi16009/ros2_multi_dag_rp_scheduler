@@ -1,0 +1,58 @@
+cmake_minimum_required(VERSION 3.8)
+project(multi_dag_demo)
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+# find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(rp_executor REQUIRED)
+
+if(TARGET rp_executor::rp_executor AND NOT TARGET rp_executor)
+  add_library(rp_executor ALIAS rp_executor::rp_executor)
+endif()
+
+add_executable(multi_dag_demo_main
+  src/lidar_node.cpp
+  src/camera_node.cpp
+  src/perception_node.cpp
+  src/detection_node.cpp
+  src/planning_node.cpp
+  src/tracking_node.cpp
+  src/control_node.cpp
+  src/main.cpp
+)
+
+ament_target_dependencies(multi_dag_demo_main
+  rp_executor
+  rclcpp
+  std_msgs
+  sensor_msgs
+)
+
+target_link_libraries(multi_dag_demo_main
+  rp_executor
+)
+
+install(
+  TARGETS multi_dag_demo_main
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  # the following line skips the linter which checks for copyrights
+  # comment the line when a copyright and license is added to all source files
+  set(ament_cmake_copyright_FOUND TRUE)
+  # the following line skips cpplint (only works in a git repo)
+  # comment the line when this package is in a git repo and when
+  # a copyright and license is added to all source files
+  set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
+ament_package()

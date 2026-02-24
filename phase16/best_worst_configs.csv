@@ -1,0 +1,11 @@
+category,run_id,max_active_dag1,max_active_dag2,threads,deadline_scale,dag1_miss_rate,dag2_miss_rate,combined_miss_rate,dag1_executed,dag2_executed,dag1_deferred,dag2_deferred,log_path
+best,31,3,5,8,1.1,0.951035,0.000181,0.475608,53630,11056,16120,0,/Users/mehedihasan/rp_ws/phase15/logs/r031_a1_3_a2_5_t8_d1p1.log
+best,55,5,3,8,1.1,0.338358,0.613112,0.475735,17183,50609,31,14335,/Users/mehedihasan/rp_ws/phase15/logs/r055_a1_5_a2_3_t8_d1p1.log
+best,43,4,4,8,1.1,0.952829,0.000092,0.476461,63407,10857,9102,0,/Users/mehedihasan/rp_ws/phase15/logs/r043_a1_4_a2_4_t8_d1p1.log
+best,47,4,5,8,1.1,0.967315,0.000103,0.483709,59599,9736,15473,0,/Users/mehedihasan/rp_ws/phase15/logs/r047_a1_4_a2_5_t8_d1p1.log
+best,11,2,4,8,1.1,0.978646,0.000420,0.489533,47533,7137,30381,249,/Users/mehedihasan/rp_ws/phase15/logs/r011_a1_2_a2_4_t8_d1p1.log
+worst,21,3,3,4,0.8,0.958769,0.935674,0.947221,37545,36595,0,0,/Users/mehedihasan/rp_ws/phase15/logs/r021_a1_3_a2_3_t4_d0p8.log
+worst,57,5,4,4,0.8,0.966468,0.934078,0.950273,38650,36543,0,0,/Users/mehedihasan/rp_ws/phase15/logs/r057_a1_5_a2_4_t4_d0p8.log
+worst,45,4,5,4,0.8,0.967601,0.938437,0.953019,39384,36142,0,0,/Users/mehedihasan/rp_ws/phase15/logs/r045_a1_4_a2_5_t4_d0p8.log
+worst,41,4,4,4,0.8,0.975143,0.943675,0.959409,38942,35863,0,0,/Users/mehedihasan/rp_ws/phase15/logs/r041_a1_4_a2_4_t4_d0p8.log
+worst,61,5,5,4,0.8,0.983032,0.967868,0.975450,36658,34047,0,0,/Users/mehedihasan/rp_ws/phase15/logs/r061_a1_5_a2_5_t4_d0p8.log
