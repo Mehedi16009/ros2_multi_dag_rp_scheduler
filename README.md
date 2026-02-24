@@ -87,6 +87,7 @@ ros2 run multi_dag_demo multi_dag_demo_main
 export RP_EXECUTOR_TRACE=1
 ros2 run multi_dag_demo multi_dag_demo_main
 ```
+
 ---
 
 Stress Testing & Tuning
@@ -101,6 +102,7 @@ Default tuned parameters (Phase 16):
 	•	Executor threads: 8
 	•	Deadline scale: 1.1 for all DAGs
 	•	Sensor timers: LiDAR = 20ms, Camera = 30ms
+	
   ---
 
   Artifacts & Analysis
@@ -119,6 +121,7 @@ Notes
 	•	ARM64 tested: macOS M1/Apple Silicon; works on Linux ARM64.
 	•	Thread pool and DAG concurrency are configurable via environment variables (RP_EXECUTOR_*).
 	•	EDF-style soft-deadline scheduler handles multiple DAGs with per-DAG execution limits and detailed runtime instrumentation.
+	
 ---
 
 Citation / Usage
@@ -126,5 +129,7 @@ Citation / Usage
 If using this framework for research, please cite:
 
 Md Mehedi Hasan. Soft Real-Time Scheduling Framework for Multi-DAG ROS2 Systems. GitHub repository, 2026. https://github.com/Mehedi16009/ros2_multi_dag_rp_scheduler￼
+
+
 ---
 
