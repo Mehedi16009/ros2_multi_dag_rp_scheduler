@@ -1,4 +1,15 @@
+# ROS2 build artifacts
 build/
+install/
+log/
+
+# Logs, reports, images
+*.log
+*.csv
+*.png
+
+# Optional reproducibility helper
+phase*_run*.shbuild/
 install/
 log/
 *.pyc
