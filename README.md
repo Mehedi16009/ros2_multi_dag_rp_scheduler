@@ -193,7 +193,7 @@ These parameters enable systematic sensitivity analysis.
 
 ## 9. Experimental Scope and Limitations
 
-Scope
+Scope <br>
 	•	Middleware-level scheduling behavior <br>
 	•	Soft real-time performance evaluation <br>
 	•	Executor-level interference analysis
@@ -220,12 +220,12 @@ The RPExecutor enables structured control over concurrency and systematic measur
 ---
 
 ## 11. Artifact Reproducibility Checklist <br>
-	•	Deterministic container environment <br>
-	•	Fixed ROS 2 distribution (Humble) <br>
-	•	Explicit build instructions <br>
-	•	Scripted experimental runs <br>
-	•	Version-controlled parameters <br>
-	•	Logged raw traces <br>
+	•	Deterministic container environment 
+	•	Fixed ROS 2 distribution (Humble) 
+	•	Explicit build instructions
+	•	Scripted experimental runs 
+	•	Version-controlled parameters
+	•	Logged raw traces 
 	•	Published summary tables
 
 ---
