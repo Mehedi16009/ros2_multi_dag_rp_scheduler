@@ -71,7 +71,7 @@ The custom executor introduces structured scheduling controls: <br>
 	•	Explicit instrumentation hooks <br>
 	•	Configurable thread pool size
 
-Collected runtime metrics include:
+Collected runtime metrics include: <br>
 	•	Per-callback response time <br>
 	•	Deadline miss rate <br>
 	•	Average and worst-case latency <br>
@@ -81,6 +81,9 @@ Collected runtime metrics include:
 The implementation isolates executor-level scheduling behavior from application logic to enable repeatable evaluation.
 
 ---
+## Simulation work is ongoing: (not yet finished)
+<img width="700" height="600" alt="Images_3" src="https://github.com/user-attachments/assets/610ce7fa-bce7-4518-9488-6aea1af64b0d" />
+
 
 ## Repository Structure
 ```
