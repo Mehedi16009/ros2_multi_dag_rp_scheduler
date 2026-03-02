@@ -9,7 +9,7 @@ Execution Environment: Docker (ARM64 and x86_64).
 
 ## Abstract
 
-ReDAG-RT is a middleware-level scheduling framework for multi-DAG robotic workloads executing in ROS 2. Modern robotic systems frequently execute multiple independent Directed Acyclic Graph (DAG) pipelines such as perception, planning, tracking, and control within a shared executor. The default ROS 2 executor model does not enforce a global priority hierarchy across DAG boundaries, which may introduce cross-DAG interference and response-time variability under load.
+ReDAG$`^{\mathrm{\textbf{RT}}}`$ is a middleware-level scheduling framework for multi-DAG robotic workloads executing in ROS 2. Modern robotic systems frequently execute multiple independent Directed Acyclic Graph (DAG) pipelines such as perception, planning, tracking, and control within a shared executor. The default ROS 2 executor model does not enforce a global priority hierarchy across DAG boundaries, which may introduce cross-DAG interference and response-time variability under load.
 
 This artifact provides a structured executor-level scheduling framework and a fully reproducible evaluation environment to enable systematic investigation of multi-DAG scheduling behavior. The implementation includes a custom rate-aware executor, configurable concurrency control, soft-deadline instrumentation, and automated experimental pipelines.
 
@@ -25,7 +25,7 @@ In ROS 2, callbacks from independent DAG pipelines are scheduled within a shared
 	•	Increased response-time variance
 	•	Degradation in deadline adherence
 
-ReDAG-RT provides a structured scheduling abstraction to study these behaviors and evaluate alternative dispatch policies under controlled conditions.
+ReDAG$`^{\mathrm{\textbf{RT}}}`$ provides a structured scheduling abstraction to study these behaviors and evaluate alternative dispatch policies under controlled conditions.
 
 ---
 
