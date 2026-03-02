@@ -1,6 +1,4 @@
-# ReDAG-RT
-
-## A Rate-Priority Executor for Multi-DAG Real-Time Execution in ROS 2
+# ReDAG-RT: A Rate-Priority Executor for Multi-DAG Real-Time Execution in ROS 2
 
 Author: Md Mehedi Hasan.<br>
 Platform: ROS 2 Humble (Ubuntu 22.04).<br>
