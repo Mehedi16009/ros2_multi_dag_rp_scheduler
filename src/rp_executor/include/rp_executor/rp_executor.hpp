@@ -95,9 +95,6 @@ private:
   const int max_active_dag1_;
   const int max_active_dag2_;
   const bool trace_callback_logs_;
-  const double deadline_scale_dag1_;
-  const double deadline_scale_dag2_;
-  const double deadline_scale_control_;
   std::chrono::nanoseconds wait_timeout_;
   const std::chrono::nanoseconds report_interval_;
 

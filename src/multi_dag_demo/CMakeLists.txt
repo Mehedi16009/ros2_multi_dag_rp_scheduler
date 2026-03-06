@@ -17,21 +17,12 @@ if(TARGET rp_executor::rp_executor AND NOT TARGET rp_executor)
 endif()
 
 add_executable(multi_dag_demo_main
-  src/lidar_node.cpp
-  src/camera_node.cpp
-  src/perception_node.cpp
-  src/detection_node.cpp
-  src/planning_node.cpp
-  src/tracking_node.cpp
-  src/control_node.cpp
   src/main.cpp
 )
 
 ament_target_dependencies(multi_dag_demo_main
   rp_executor
   rclcpp
-  std_msgs
-  sensor_msgs
 )
 
 target_link_libraries(multi_dag_demo_main

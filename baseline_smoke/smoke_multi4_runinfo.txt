@@ -1,0 +1,13 @@
+run_id=smoke_multi4
+executor_type=multi
+threads=4
+tasks=6
+period_set=nonharmonic
+utilization=0.8
+dag_depth=4
+duration_sec=8
+warmup_sec=2
+wcet_variation=0.1
+output_dir=/root/rp_ws/baseline_smoke
+analysis_start_ns=111836131215
+experiment_start_ns=109836131215

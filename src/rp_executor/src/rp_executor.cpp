@@ -1,6 +1,7 @@
 #include "rp_executor/rp_executor.hpp"
 
 #include <chrono>
+#include <cctype>
 #include <cstdlib>
 #include <functional>
 #include <limits>
@@ -52,18 +53,29 @@ int env_int_or_default(const char * env_name, int default_value, int minimum)
   }
 }
 
-double env_double_or_default(const char * env_name, double default_value, double minimum)
+bool starts_with(const std::string & text, const std::string & prefix)
 {
-  const char * value = std::getenv(env_name);
-  if (value == nullptr) {
-    return default_value;
+  return text.rfind(prefix, 0) == 0;
+}
+
+int64_t parse_period_us_from_node_name(const std::string & node_name)
+{
+  const std::size_t marker = node_name.rfind("_p");
+  if (marker == std::string::npos || marker + 2 >= node_name.size()) {
+    return -1;
+  }
+
+  const std::string suffix = node_name.substr(marker + 2);
+  for (char c : suffix) {
+    if (!std::isdigit(static_cast<unsigned char>(c))) {
+      return -1;
+    }
   }
 
   try {
-    const double parsed = std::stod(value);
-    return parsed < minimum ? minimum : parsed;
+    return std::stoll(suffix);
   } catch (const std::exception &) {
-    return default_value;
+    return -1;
   }
 }
 
@@ -81,9 +93,6 @@ RPExecutor::RPExecutor(
   max_active_dag1_(env_int_or_default("RP_EXECUTOR_MAX_ACTIVE_DAG1", 3, 1)),
   max_active_dag2_(env_int_or_default("RP_EXECUTOR_MAX_ACTIVE_DAG2", 5, 1)),
   trace_callback_logs_(env_flag_enabled("RP_EXECUTOR_TRACE", false)),
-  deadline_scale_dag1_(env_double_or_default("RP_EXECUTOR_DEADLINE_SCALE_DAG1", 1.1, 0.1)),
-  deadline_scale_dag2_(env_double_or_default("RP_EXECUTOR_DEADLINE_SCALE_DAG2", 1.1, 0.1)),
-  deadline_scale_control_(env_double_or_default("RP_EXECUTOR_DEADLINE_SCALE_CONTROL", 1.1, 0.1)),
   wait_timeout_(timeout),
   report_interval_(std::chrono::seconds(3)),
   dag1_active(0),
@@ -113,22 +122,23 @@ RPExecutor::RPExecutor(
   lateness_hist_gt_10ms_dag2(0),
   next_report_time_ns(0)
 {
+  const char * deadline_model = std::getenv("REDAG_DEADLINE_MODEL");
+  if (deadline_model != nullptr && std::string(deadline_model) != "D_EQUALS_T") {
+    throw std::runtime_error("REDAG_DEADLINE_MODEL must be D_EQUALS_T");
+  }
+
   RCLCPP_INFO(
     rclcpp::get_logger("rp_executor"),
     "RPExecutor constructed (requested_threads=%zu, configured_threads=%zu, "
     "yield_before_execute=%s, wait_timeout_ns=%lld, max_active_dag1=%d, "
-    "max_active_dag2=%d, trace_callback_logs=%s, deadline_scale_dag1=%.3f, "
-    "deadline_scale_dag2=%.3f, deadline_scale_control=%.3f)",
+    "max_active_dag2=%d, trace_callback_logs=%s)",
     number_of_threads,
     configured_number_of_threads_,
     yield_before_execute ? "true" : "false",
     static_cast<long long>(wait_timeout_.count()),
     max_active_dag1_,
     max_active_dag2_,
-    trace_callback_logs_ ? "true" : "false",
-    deadline_scale_dag1_,
-    deadline_scale_dag2_,
-    deadline_scale_control_);
+    trace_callback_logs_ ? "true" : "false");
 }
 
 const char * RPExecutor::dag_name(DagId dag_id)
@@ -206,6 +216,12 @@ RPExecutor::DagId RPExecutor::classify_dag(
 
   if (any_exec.timer) {
     callback_key = "timer_node=" + node_name;
+    if (starts_with(node_name, "redag_task_d1_")) {
+      return DagId::Dag1;
+    }
+    if (starts_with(node_name, "redag_task_d2_")) {
+      return DagId::Dag2;
+    }
     if (node_name == "lidar_node") {
       return DagId::Dag1;
     }
@@ -258,56 +274,19 @@ bool RPExecutor::try_acquire_dag_slot(std::atomic<int> * counter, int concurrenc
 
 int64_t RPExecutor::relative_deadline_ns(const rclcpp::AnyExecutable & any_exec) const
 {
-  constexpr int64_t kNsPerMs = 1000000;
-  auto scaled_deadline_ns = [](int64_t base_ms, double scale) -> int64_t {
-      double scaled_ms = static_cast<double>(base_ms) * scale;
-      if (scaled_ms < 1.0) {
-        scaled_ms = 1.0;
-      }
-      return static_cast<int64_t>(scaled_ms * static_cast<double>(kNsPerMs));
-    };
+  constexpr int64_t kNsPerUs = 1000;
+  constexpr int64_t kFallbackDeadlineNs = 100000000;
   const std::string node_name =
     any_exec.node_base ? std::string(any_exec.node_base->get_name()) : std::string();
 
-  if (any_exec.subscription) {
-    const std::string topic_name(any_exec.subscription->get_topic_name());
-    if (
-      node_name == "control_node" &&
-      (topic_name.find("/planning") != std::string::npos ||
-      topic_name.find("/tracking") != std::string::npos))
-    {
-      return scaled_deadline_ns(50, deadline_scale_control_);
-    }
-    if (topic_name.find("/lidar") != std::string::npos) {
-      return scaled_deadline_ns(120, deadline_scale_dag1_);
-    }
-    if (topic_name.find("/perception") != std::string::npos) {
-      return scaled_deadline_ns(90, deadline_scale_dag1_);
-    }
-    if (topic_name.find("/planning") != std::string::npos) {
-      return scaled_deadline_ns(70, deadline_scale_dag1_);
-    }
-    if (topic_name.find("/camera") != std::string::npos) {
-      return scaled_deadline_ns(180, deadline_scale_dag2_);
-    }
-    if (topic_name.find("/detection") != std::string::npos) {
-      return scaled_deadline_ns(120, deadline_scale_dag2_);
-    }
-    if (topic_name.find("/tracking") != std::string::npos) {
-      return scaled_deadline_ns(90, deadline_scale_dag2_);
-    }
-  }
-
   if (any_exec.timer) {
-    if (node_name == "lidar_node") {
-      return scaled_deadline_ns(120, deadline_scale_dag1_);
-    }
-    if (node_name == "camera_node") {
-      return scaled_deadline_ns(180, deadline_scale_dag2_);
+    const int64_t period_us = parse_period_us_from_node_name(node_name);
+    if (period_us > 0) {
+      return period_us * kNsPerUs;
     }
   }
 
-  return 100 * kNsPerMs;
+  return kFallbackDeadlineNs;
 }
 
 void RPExecutor::collect_ready_executables_locked()
@@ -372,9 +351,6 @@ bool RPExecutor::select_next_ready_executable_locked(
     }
 
     if (best_index == ready_queue_.size()) {
-      const auto now_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
-      const auto thread_id = std::hash<std::thread::id>{}(std::this_thread::get_id());
       for (auto & candidate : ready_queue_) {
         if (candidate.dag_id == DagId::None || candidate.deferred_logged) {
           continue;
@@ -388,19 +364,6 @@ bool RPExecutor::select_next_ready_executable_locked(
           continue;
         }
         increment_deferred_metric(candidate.dag_id);
-        if (trace_callback_logs_) {
-          RCLCPP_INFO(
-            rclcpp::get_logger("rp_executor"),
-            "Deferring callback type=%s dag=%s %s thread_id=%zu timestamp_ns=%lld "
-            "dag1_active=%d dag2_active=%d",
-            callback_type_from_executable(candidate.any_exec),
-            dag_name(candidate.dag_id),
-            candidate.callback_key.c_str(),
-            thread_id,
-            static_cast<long long>(now_ns),
-            dag1_active.load(std::memory_order_relaxed),
-            dag2_active.load(std::memory_order_relaxed));
-        }
         candidate.deferred_logged = true;
       }
       return false;
@@ -413,23 +376,7 @@ bool RPExecutor::select_next_ready_executable_locked(
       if (!try_acquire_dag_slot(active_counter, concurrency_limit))
       {
         if (!candidate.deferred_logged) {
-          const auto now_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count();
-          const auto thread_id = std::hash<std::thread::id>{}(std::this_thread::get_id());
           increment_deferred_metric(candidate.dag_id);
-          if (trace_callback_logs_) {
-            RCLCPP_INFO(
-              rclcpp::get_logger("rp_executor"),
-              "Deferring callback type=%s dag=%s %s thread_id=%zu timestamp_ns=%lld "
-              "dag1_active=%d dag2_active=%d",
-              callback_type_from_executable(candidate.any_exec),
-              dag_name(candidate.dag_id),
-              candidate.callback_key.c_str(),
-              thread_id,
-              static_cast<long long>(now_ns),
-              dag1_active.load(std::memory_order_relaxed),
-              dag2_active.load(std::memory_order_relaxed));
-          }
           candidate.deferred_logged = true;
         }
         continue;
@@ -760,25 +707,6 @@ void RPExecutor::run_execution_loop(std::mutex & wait_mutex)
 
     if (yield_before_execute_) {
       std::this_thread::yield();
-    }
-
-    if (trace_callback_logs_) {
-      const auto now_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
-      const auto thread_id = std::hash<std::thread::id>{}(std::this_thread::get_id());
-      RCLCPP_INFO(
-        rclcpp::get_logger("rp_executor"),
-        "Executing callback type=%s dag=%s %s thread_id=%zu timestamp_ns=%lld "
-        "ready_time_ns=%lld abs_deadline_ns=%lld dag1_active=%d dag2_active=%d",
-        callback_type_from_executable(ready_exec.any_exec),
-        dag_name(ready_exec.dag_id),
-        ready_exec.callback_key.c_str(),
-        thread_id,
-        static_cast<long long>(now_ns),
-        static_cast<long long>(ready_exec.ready_time_ns),
-        static_cast<long long>(ready_exec.absolute_deadline_ns),
-        dag1_active.load(std::memory_order_relaxed),
-        dag2_active.load(std::memory_order_relaxed));
     }
 
     const int64_t execution_start_ns = steady_now_ns();
